@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth, useRouter } from "../context/AuthContext";
 import { PROPERTIES } from "../data/constants";
-import { Card, Btn, Input, Alert, Toggle } from "../components/common";
+import { Card, Btn, Input, Alert, Toggle, Badge } from "../components/common";
 
 // ─── BECOME A HOST ────────────────────────────────────────────────────────────
 export function BecomeHostPage() {
@@ -167,8 +167,16 @@ export function BecomeHostPage() {
 export function ProfilePage() {
   const { user, login } = useAuth();
   const { navigate } = useRouter();
-  const [form, setForm] = useState({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "" });
-  const [prefs, setPrefs] = useState({ smoking: false, petFriendly: true, disabilityAccess: false });
+  const [form, setForm] = useState({ 
+    name: user?.name || "", 
+    email: user?.email || "", 
+    phone: user?.phone || "" 
+  });
+  const [prefs, setPrefs] = useState({ 
+    smoking: false, 
+    petFriendly: true, 
+    disabilityAccess: false 
+  });
   const [saved, setSaved] = useState(false);
   const togP = f => setPrefs(p => ({ ...p, [f]: !p[f] }));
 
@@ -183,14 +191,18 @@ export function ProfilePage() {
             {form.name?.[0]?.toUpperCase() || "U"}
           </div>
           <div>
-            <p className="font-semibold text-[#1B2B4B]">{form.name}</p>
+            <p className="font-semibold text-[#1B2B4B]">{form.name || "User"}</p>
             <Badge color={user?.role === "host" ? "coral" : "blue"}>{user?.role === "host" ? "Host" : "Guest"}</Badge>
           </div>
         </div>
         <Input label="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
         <Input label="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
         <Input label="Phone Number" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-        <Btn variant="primary" onClick={() => { login({ ...user, ...form }); setSaved(true); setTimeout(() => setSaved(false), 2500); }}>
+        <Btn variant="primary" onClick={() => { 
+          login({ ...user, ...form }); 
+          setSaved(true); 
+          setTimeout(() => setSaved(false), 2500); 
+        }}>
           Save Changes
         </Btn>
       </Card>
@@ -232,6 +244,8 @@ export function PropertyFormPage({ params }) {
   const { navigate } = useRouter();
   const isEdit = !!params?.id;
   const existing = isEdit ? PROPERTIES.find(p => p.id === params.id) : null;
+  
+  // ─── FORM STATE ──────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     title: existing?.title || "",
     location: existing?.location || "",
@@ -250,12 +264,217 @@ export function PropertyFormPage({ params }) {
     pool: existing?.amenities?.includes("Pool") || false,
     fireplace: existing?.amenities?.includes("Fireplace") || false,
   });
+
+  // ─── PHOTO UPLOAD STATE ──────────────────────────────────────────────────
+  const [photos, setPhotos] = useState([]);
+  const [photoPreviews, setPhotoPreviews] = useState([]);
+  
+  // ─── VALIDATION STATE ─────────────────────────────────────────────────────
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const tog = f => setForm(v => ({ ...v, [f]: !v[f] }));
 
+  // ─── PHOTO HANDLING ──────────────────────────────────────────────────────
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    const validFiles = files.filter(file => {
+      const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+      const isValidSize = file.size <= 5 * 1024 * 1024;
+      
+      if (!isValidType) {
+        alert(`${file.name} is not supported. Use JPG, PNG, or WEBP.`);
+        return false;
+      }
+      if (!isValidSize) {
+        alert(`${file.name} is too large. Maximum 5MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    const previews = validFiles.map(file => URL.createObjectURL(file));
+    setPhotos([...photos, ...validFiles]);
+    setPhotoPreviews([...photoPreviews, ...previews]);
+    setErrors({ ...errors, photos: undefined });
+  };
+
+  const removePhoto = (index) => {
+    URL.revokeObjectURL(photoPreviews[index]);
+    const newPhotos = [...photos];
+    const newPreviews = [...photoPreviews];
+    newPhotos.splice(index, 1);
+    newPreviews.splice(index, 1);
+    setPhotos(newPhotos);
+    setPhotoPreviews(newPreviews);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    handlePhotoUpload({ target: { files } });
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('border-[#E8634A]', 'bg-[#fdf0ed]');
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-[#E8634A]', 'bg-[#fdf0ed]');
+  };
+
+  // ─── VALIDATION FUNCTIONS ──────────────────────────────────────────────
+  const validateField = (field, value) => {
+    const newErrors = { ...errors };
+    
+    switch(field) {
+      case 'title':
+        if (!value || value.trim().length < 3) {
+          newErrors.title = 'Title must be at least 3 characters';
+        } else if (value.trim().length > 100) {
+          newErrors.title = 'Title must be less than 100 characters';
+        } else {
+          delete newErrors.title;
+        }
+        break;
+        
+      case 'location':
+        if (!value || value.trim().length < 2) {
+          newErrors.location = 'Please enter a valid location';
+        } else {
+          delete newErrors.location;
+        }
+        break;
+        
+      case 'price':
+        if (!value || isNaN(value) || Number(value) <= 0) {
+          newErrors.price = 'Please enter a valid price greater than 0';
+        } else if (Number(value) > 1000000) {
+          newErrors.price = 'Price seems too high. Please verify.';
+        } else {
+          delete newErrors.price;
+        }
+        break;
+        
+      case 'description':
+        if (!value || value.trim().length < 10) {
+          newErrors.description = 'Description must be at least 10 characters';
+        } else {
+          delete newErrors.description;
+        }
+        break;
+        
+      case 'bedrooms':
+        if (!value || Number(value) < 1 || Number(value) > 20) {
+          newErrors.bedrooms = 'Please enter 1-20 bedrooms';
+        } else {
+          delete newErrors.bedrooms;
+        }
+        break;
+        
+      case 'maxGuests':
+        if (!value || Number(value) < 1 || Number(value) > 50) {
+          newErrors.maxGuests = 'Please enter 1-50 guests';
+        } else {
+          delete newErrors.maxGuests;
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleFieldChange = (field, value) => {
+    setForm({ ...form, [field]: value });
+    setTouched({ ...touched, [field]: true });
+    validateField(field, value);
+  };
+
+  const handleBlur = (field) => {
+    setTouched({ ...touched, [field]: true });
+    validateField(field, form[field]);
+  };
+
+  const getFieldClass = (field) => {
+    const base = "w-full px-3 py-2 border rounded-lg text-sm focus:outline-none transition-colors bg-white text-[#1B2B4B]";
+    if (touched[field] && errors[field]) {
+      return base + " border-red-500 focus:border-red-500 ring-2 ring-red-200 error-field";
+    }
+    if (touched[field] && !errors[field]) {
+      return base + " border-green-500 focus:border-green-500";
+    }
+    return base + " border-gray-200 focus:border-[#E8634A]";
+  };
+
+  const validateAll = () => {
+    const fields = ['title', 'location', 'price', 'description', 'bedrooms', 'maxGuests'];
+    const allErrors = {};
+    let isValid = true;
+    
+    fields.forEach(field => {
+      const value = form[field];
+      let error = '';
+      
+      switch(field) {
+        case 'title':
+          if (!value || value.trim().length < 3) error = 'Title must be at least 3 characters';
+          break;
+        case 'location':
+          if (!value || value.trim().length < 2) error = 'Please enter a valid location';
+          break;
+        case 'price':
+          if (!value || isNaN(value) || Number(value) <= 0) error = 'Please enter a valid price';
+          break;
+        case 'description':
+          if (!value || value.trim().length < 10) error = 'Description must be at least 10 characters';
+          break;
+        case 'bedrooms':
+          if (!value || Number(value) < 1) error = 'Please enter at least 1 bedroom';
+          break;
+        case 'maxGuests':
+          if (!value || Number(value) < 1) error = 'Please enter at least 1 guest';
+          break;
+        default:
+          break;
+      }
+      
+      if (error) {
+        allErrors[field] = error;
+        isValid = false;
+      }
+    });
+    
+    if (photos.length === 0 && !isEdit) {
+      allErrors.photos = 'Please upload at least one photo';
+      isValid = false;
+    }
+    
+    setErrors(allErrors);
+    return isValid;
+  };
+
+  // ─── SAVE ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!form.title || !form.location || !form.price) return;
+    if (!validateAll()) {
+      const firstError = document.querySelector('.error-field');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstError.focus();
+      }
+      return;
+    }
+    
     setLoading(true);
     await new Promise(r => setTimeout(r, 700));
     setSaved(true);
@@ -264,57 +483,257 @@ export function PropertyFormPage({ params }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <button className="text-sm text-gray-400 hover:text-[#1B2B4B] mb-6" onClick={() => navigate("/host/dashboard")}>
         ← Back
       </button>
-      <h1 className="text-2xl font-bold font-serif text-[#1B2B4B] mb-6">{isEdit ? "Edit Listing" : "Create New Listing"}</h1>
+      
+      <h1 className="text-2xl font-bold font-serif text-[#1B2B4B] mb-6">
+        {isEdit ? "Edit Listing" : "Create New Listing"}
+      </h1>
+      
       {saved && <Alert type="success">Listing {isEdit ? "updated" : "created"} successfully. Redirecting…</Alert>}
 
-      <Card className="mb-4 p-6">
-        <h3 className="font-bold text-[#1B2B4B] mb-4">Basic Information</h3>
-        <Input label="Property Title *" placeholder="e.g. Sunset Villa with Pool" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
-        <Input label="Location *" placeholder="City, Kenya" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
-        <Input label="Description" placeholder="Describe your property…" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Input label="Price/Night (KES) *" type="number" placeholder="10000" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
-          <Input label="Bedrooms" type="number" value={form.bedrooms} onChange={e => setForm({ ...form, bedrooms: +e.target.value })} />
-          <Input label="Bathrooms" type="number" value={form.bathrooms} onChange={e => setForm({ ...form, bathrooms: +e.target.value })} />
-          <Input label="Max Guests" type="number" value={form.maxGuests} onChange={e => setForm({ ...form, maxGuests: +e.target.value })} />
+      <form onSubmit={(e) => e.preventDefault()}>
+        {/* ─── PHOTO UPLOAD SECTION ──────────────────────────────────────── */}
+        <Card className="mb-4 p-6">
+          <h3 className="font-bold text-[#1B2B4B] mb-2">
+            Photos <span className="text-[#E8634A] text-sm">*</span>
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">
+            Upload up to 5 photos (JPG, PNG, WEBP, Max 5MB each)
+          </p>
+          
+          <div 
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+              errors.photos ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-[#E8634A]'
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <input 
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={handlePhotoUpload}
+              className="hidden"
+              id="photo-upload"
+            />
+            <label htmlFor="photo-upload" className="cursor-pointer block">
+              <div className="text-4xl mb-3">📸</div>
+              <p className="text-sm text-gray-500">
+                Drag & drop photos here or <span className="text-[#E8634A] font-medium">click to browse</span>
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Supported: JPG, PNG, WEBP (Max 5MB)
+              </p>
+            </label>
+          </div>
+          {errors.photos && (
+            <p className="text-xs text-red-500 mt-2">{errors.photos}</p>
+          )}
+          
+          {photoPreviews.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
+              {photoPreviews.map((preview, index) => (
+                <div key={index} className="relative group">
+                  <img 
+                    src={preview} 
+                    alt={`Property photo ${index + 1}`}
+                    className="w-full h-24 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  >
+                    ×
+                  </button>
+                  <span className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
+                    {index + 1}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ─── BASIC INFORMATION ──────────────────────────────────────────── */}
+        <Card className="mb-4 p-6">
+          <h3 className="font-bold text-[#1B2B4B] mb-4">
+            Basic Information <span className="text-red-500 text-sm">* Required</span>
+          </h3>
+          
+          <div className="mb-3">
+            <label className="block text-xs font-semibold text-[#1B2B4B] mb-1.5 uppercase tracking-wide">
+              Property Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              placeholder="e.g. Sunset Villa with Pool"
+              value={form.title}
+              onChange={e => handleFieldChange('title', e.target.value)}
+              onBlur={() => handleBlur('title')}
+              className={getFieldClass('title')}
+            />
+            {touched.title && errors.title && (
+              <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+            )}
+          </div>
+
+          <div className="mb-3">
+            <label className="block text-xs font-semibold text-[#1B2B4B] mb-1.5 uppercase tracking-wide">
+              Location <span className="text-red-500">*</span>
+            </label>
+            <input
+              placeholder="City, Kenya"
+              value={form.location}
+              onChange={e => handleFieldChange('location', e.target.value)}
+              onBlur={() => handleBlur('location')}
+              className={getFieldClass('location')}
+            />
+            {touched.location && errors.location && (
+              <p className="text-xs text-red-500 mt-1">{errors.location}</p>
+            )}
+          </div>
+
+          <div className="mb-3">
+            <label className="block text-xs font-semibold text-[#1B2B4B] mb-1.5 uppercase tracking-wide">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Describe your property…"
+              value={form.description}
+              onChange={e => handleFieldChange('description', e.target.value)}
+              onBlur={() => handleBlur('description')}
+              className={getFieldClass('description') + " resize-y"}
+            />
+            {touched.description && errors.description && (
+              <p className="text-xs text-red-500 mt-1">{errors.description}</p>
+            )}
+            <p className="text-xs text-gray-400 mt-1">
+              {form.description.length}/500 characters
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-[#1B2B4B] mb-1.5 uppercase tracking-wide">
+                Price/Night <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                placeholder="10000"
+                value={form.price}
+                onChange={e => handleFieldChange('price', e.target.value)}
+                onBlur={() => handleBlur('price')}
+                className={getFieldClass('price')}
+              />
+              {touched.price && errors.price && (
+                <p className="text-xs text-red-500 mt-1">{errors.price}</p>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-[#1B2B4B] mb-1.5 uppercase tracking-wide">
+                Bedrooms <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={form.bedrooms}
+                onChange={e => handleFieldChange('bedrooms', e.target.value)}
+                onBlur={() => handleBlur('bedrooms')}
+                className={getFieldClass('bedrooms')}
+              />
+              {touched.bedrooms && errors.bedrooms && (
+                <p className="text-xs text-red-500 mt-1">{errors.bedrooms}</p>
+              )}
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-[#1B2B4B] mb-1.5 uppercase tracking-wide">
+                Bathrooms
+              </label>
+              <input
+                type="number"
+                value={form.bathrooms}
+                onChange={e => handleFieldChange('bathrooms', e.target.value)}
+                className={getFieldClass('bathrooms')}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-[#1B2B4B] mb-1.5 uppercase tracking-wide">
+                Max Guests <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={form.maxGuests}
+                onChange={e => handleFieldChange('maxGuests', e.target.value)}
+                onBlur={() => handleBlur('maxGuests')}
+                className={getFieldClass('maxGuests')}
+              />
+              {touched.maxGuests && errors.maxGuests && (
+                <p className="text-xs text-red-500 mt-1">{errors.maxGuests}</p>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* ─── AMENITIES ────────────────────────────────────────────────────── */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-4">
+          <Card className="p-5">
+            <h3 className="font-bold text-[#1B2B4B] mb-1 text-sm">Default Services</h3>
+            <p className="text-xs text-gray-400 mb-3">Always included</p>
+            <Toggle label="WiFi" checked={form.wifi} onChange={() => tog("wifi")} />
+            <Toggle label="Kitchen" checked={form.kitchen} onChange={() => tog("kitchen")} />
+          </Card>
+          <Card className="p-5">
+            <h3 className="font-bold text-[#1B2B4B] mb-1 text-sm">Extra Amenities</h3>
+            <p className="text-xs text-gray-400 mb-3">Optional add-ons</p>
+            <Toggle label="Air Conditioning" checked={form.ac} onChange={() => tog("ac")} />
+            <Toggle label="Grill / BBQ" checked={form.grill} onChange={() => tog("grill")} />
+            <Toggle label="Pool" checked={form.pool} onChange={() => tog("pool")} />
+            <Toggle label="Fireplace" checked={form.fireplace} onChange={() => tog("fireplace")} />
+          </Card>
         </div>
-      </Card>
 
-      <div className="grid sm:grid-cols-2 gap-4 mb-4">
-        <Card className="p-5">
-          <h3 className="font-bold text-[#1B2B4B] mb-1 text-sm">Default Services</h3>
-          <p className="text-xs text-gray-400 mb-3">Always included</p>
-          <Toggle label="WiFi" checked={form.wifi} onChange={() => tog("wifi")} />
-          <Toggle label="Kitchen" checked={form.kitchen} onChange={() => tog("kitchen")} />
+        {/* ─── PREFERENCES ──────────────────────────────────────────────────── */}
+        <Card className="p-5 mb-6">
+          <h3 className="font-bold text-[#1B2B4B] mb-1 text-sm">Accommodation Preferences</h3>
+          <p className="text-xs text-gray-400 mb-3">Let guests know what is allowed</p>
+          <Toggle label="Smoking Allowed" checked={form.smoking} onChange={() => tog("smoking")} />
+          <Toggle label="Pet Friendly" checked={form.petFriendly} onChange={() => tog("petFriendly")} />
+          <Toggle label="Disability Accessible" checked={form.disabilityAccess} onChange={() => tog("disabilityAccess")} />
         </Card>
-        <Card className="p-5">
-          <h3 className="font-bold text-[#1B2B4B] mb-1 text-sm">Extra Amenities</h3>
-          <p className="text-xs text-gray-400 mb-3">Optional add-ons</p>
-          <Toggle label="Air Conditioning" checked={form.ac} onChange={() => tog("ac")} />
-          <Toggle label="Grill / BBQ" checked={form.grill} onChange={() => tog("grill")} />
-          <Toggle label="Pool" checked={form.pool} onChange={() => tog("pool")} />
-          <Toggle label="Fireplace" checked={form.fireplace} onChange={() => tog("fireplace")} />
-        </Card>
-      </div>
 
-      <Card className="p-5 mb-6">
-        <h3 className="font-bold text-[#1B2B4B] mb-1 text-sm">Accommodation Preferences</h3>
-        <p className="text-xs text-gray-400 mb-3">Let guests know what is allowed</p>
-        <Toggle label="Smoking Allowed" checked={form.smoking} onChange={() => tog("smoking")} />
-        <Toggle label="Pet Friendly" checked={form.petFriendly} onChange={() => tog("petFriendly")} />
-        <Toggle label="Disability Accessible" checked={form.disabilityAccess} onChange={() => tog("disabilityAccess")} />
-      </Card>
+        {/* ─── VALIDATION SUMMARY ────────────────────────────────────────────── */}
+        {Object.keys(errors).length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-red-800 mb-2">
+              Please fix the following errors:
+            </p>
+            <ul className="text-sm text-red-600 list-disc list-inside">
+              {Object.values(errors).map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-      <div className="flex gap-3">
-        <Btn variant="primary" onClick={handleSave} disabled={loading || !form.title || !form.location || !form.price}>
-          {loading ? "Saving…" : isEdit ? "Save Changes" : "Publish Listing"}
-        </Btn>
-        <Btn variant="ghost" onClick={() => navigate("/host/dashboard")}>Cancel</Btn>
-      </div>
+        {/* ─── SUBMIT ────────────────────────────────────────────────────────── */}
+        <div className="flex gap-3">
+          <Btn 
+            variant="primary" 
+            onClick={handleSave} 
+            disabled={loading || Object.keys(errors).length > 0}
+          >
+            {loading ? "Saving…" : isEdit ? "Save Changes" : "Publish Listing"}
+          </Btn>
+          <Btn variant="ghost" onClick={() => navigate("/host/dashboard")}>Cancel</Btn>
+        </div>
+      </form>
     </div>
   );
 }
