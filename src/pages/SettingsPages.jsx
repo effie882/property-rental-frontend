@@ -7,23 +7,56 @@ import { Card, Btn, Input, Alert, Toggle, Badge } from "../components/common";
 export function BecomeHostPage() {
   const { user, upgradeToHost } = useAuth();
   const { navigate } = useRouter();
-  const [step, setStep] = useState(1);
-  const [agreed, setAgreed] = useState(false);
-  const [loading, setLoading] = useState(false);
+   const [step, setStep] = useState(1);
+   const [agreed, setAgreed] = useState(false);
+   const [idVerified, setIdVerified] = useState(false);
+   const [idFrontDoc, setIdFrontDoc] = useState(null);
+   const [idFrontPreview, setIdFrontPreview] = useState(null);
+   const [idBackDoc, setIdBackDoc] = useState(null);
+   const [idBackPreview, setIdBackPreview] = useState(null);
+    const [passportVerified, setPassportVerified] = useState(false);
+    const [passportDoc, setPassportDoc] = useState(null);
+    const [passportPreview, setPassportPreview] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-  const steps = ["How it works", "Requirements", "Agreement", "Activate"];
+   const handlePassportUpload = (e) => {
+     const file = e.target.files[0];
+     if (!file) return;
+     const isValidType = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+     const isValidSize = file.size <= 5 * 1024 * 1024;
+     if (!isValidType) {
+       alert("Unsupported file type. Use JPG, PNG, or WEBP.");
+       return;
+     }
+     if (!isValidSize) {
+       alert("File too large. Maximum 5MB.");
+       return;
+     }
+     setPassportDoc(file);
+     setPassportPreview(URL.createObjectURL(file));
+     setPassportVerified(false);
+   };
 
-  const handleActivate = async () => {
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 900));
-    if (user) {
-      upgradeToHost();
-      setStep(5);
-    } else {
-      navigate("/register");
-    }
-    setLoading(false);
-  };
+   const removePassport = () => {
+     if (passportPreview) URL.revokeObjectURL(passportPreview);
+     setPassportDoc(null);
+     setPassportPreview(null);
+     setPassportVerified(false);
+   };
+
+   const steps = ["How it works", "Requirements", "Agreement", "ID Verification", "Activate"];
+
+   const handleActivate = async () => {
+     setLoading(true);
+     await new Promise(r => setTimeout(r, 900));
+     if (user) {
+       upgradeToHost();
+       setStep(6);
+     } else {
+       navigate("/register");
+     }
+     setLoading(false);
+   };
 
   const benefits = [
     { title: "Set your own price", desc: "You decide how much to charge per night. Adjust anytime based on season or demand." },
@@ -41,7 +74,7 @@ export function BecomeHostPage() {
     "Clean, safe, and habitable condition at all times",
   ];
 
-  if (step === 5) {
+   if (step === 6) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <div className="text-5xl mb-6 font-bold text-[#E8634A] font-serif">Done!</div>
@@ -139,6 +172,107 @@ export function BecomeHostPage() {
           )}
 
           {step === 4 && (
+            <div>
+              <h2 className="text-xl font-bold font-serif text-[#1B2B4B] mb-2">ID Verification</h2>
+               <p className="text-sm text-gray-500 mb-5">Upload clear photos of both the front and back of your Kenyan national ID or passport for verification.</p>
+
+               <div className="mb-4">
+                 <p className="text-xs font-semibold text-[#1B2B4B] mb-2 uppercase tracking-wide">ID Front <span className="text-red-500">*</span></p>
+                 {idFrontPreview ? (
+                   <div className="relative border-2 border-dashed rounded-xl p-4 text-center transition-all border-gray-300 bg-gray-50">
+                     <img src={idFrontPreview} alt="ID front preview" className="max-h-40 mx-auto rounded-lg border border-gray-200" />
+                     <button type="button" onClick={() => { setIdFrontDoc(null); setIdFrontPreview(null); setIdVerified(false); }}
+                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">×</button>
+                     <p className="text-xs text-gray-500 mt-2">{idFrontDoc?.name}</p>
+                   </div>
+                 ) : (
+                   <div className="border-2 border-dashed rounded-xl p-8 text-center transition-all border-gray-300 hover:border-[#E8634A] bg-gray-50"
+                     onClick={() => document.getElementById("id-front-upload").click()}>
+                     <input type="file" accept="image/*,.pdf" className="hidden" id="id-front-upload"
+                       onChange={e => {
+                         const file = e.target.files[0];
+                         if (file) {
+                           setIdFrontDoc(file);
+                           setIdFrontPreview(URL.createObjectURL(file));
+                           setIdVerified(false);
+                         }
+                       }} />
+                     <div className="text-4xl mb-3">🪪</div>
+                     <p className="text-sm text-gray-500">Click to upload or drag & drop ID front</p>
+                     <p className="text-xs text-gray-400 mt-1">JPG, PNG, or PDF (Max 5MB)</p>
+                   </div>
+                 )}
+               </div>
+
+               <div className="mb-4">
+                 <p className="text-xs font-semibold text-[#1B2B4B] mb-2 uppercase tracking-wide">ID Back <span className="text-red-500">*</span></p>
+                 {idBackPreview ? (
+                   <div className="relative border-2 border-dashed rounded-xl p-4 text-center transition-all border-gray-300 bg-gray-50">
+                     <img src={idBackPreview} alt="ID back preview" className="max-h-40 mx-auto rounded-lg border border-gray-200" />
+                     <button type="button" onClick={() => { setIdBackDoc(null); setIdBackPreview(null); setIdVerified(false); }}
+                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">×</button>
+                     <p className="text-xs text-gray-500 mt-2">{idBackDoc?.name}</p>
+                   </div>
+                 ) : (
+                   <div className="border-2 border-dashed rounded-xl p-8 text-center transition-all border-gray-300 hover:border-[#E8634A] bg-gray-50"
+                     onClick={() => document.getElementById("id-back-upload").click()}>
+                     <input type="file" accept="image/*,.pdf" className="hidden" id="id-back-upload"
+                       onChange={e => {
+                         const file = e.target.files[0];
+                         if (file) {
+                           setIdBackDoc(file);
+                           setIdBackPreview(URL.createObjectURL(file));
+                           setIdVerified(false);
+                         }
+                       }} />
+                     <div className="text-4xl mb-3">🪪</div>
+                     <p className="text-sm text-gray-500">Click to upload or drag & drop ID back</p>
+                     <p className="text-xs text-gray-400 mt-1">JPG, PNG, or PDF (Max 5MB)</p>
+                   </div>
+                 )}
+               </div>
+
+               <label className="flex items-start gap-3 cursor-pointer mb-6">
+                 <input type="checkbox" checked={idVerified} onChange={e => setIdVerified(e.target.checked)}
+                   className="mt-0.5 accent-[#E8634A] w-4 h-4" />
+                 <span className="text-sm text-gray-600">I confirm both ID images are valid and belong to me.</span>
+               </label>
+
+               <div className="border-t border-gray-100 pt-6 mt-2">
+                 <h3 className="font-bold text-[#1B2B4B] mb-2 text-sm">Passport Photo</h3>
+                 <p className="text-xs text-gray-400 mb-4">Upload a clear, recent passport-sized photo. Face must be visible and well-lit.</p>
+                 {passportPreview ? (
+                   <div className="relative border-2 border-dashed rounded-xl p-4 text-center transition-all border-gray-300 bg-gray-50 mb-4">
+                     <img src={passportPreview} alt="Passport photo preview" className="max-h-40 mx-auto rounded-lg border border-gray-200" />
+                     <button type="button" onClick={() => { removePassport(); setPassportVerified(false); }}
+                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">×</button>
+                     <p className="text-xs text-gray-500 mt-2">{passportDoc?.name}</p>
+                   </div>
+                 ) : (
+                   <div className="border-2 border-dashed rounded-xl p-8 text-center transition-all mb-4 border-gray-300 hover:border-[#E8634A] bg-gray-50"
+                     onClick={() => document.getElementById("passport-upload").click()}>
+                     <input type="file" accept="image/*" className="hidden" id="passport-upload"
+                       onChange={e => handlePassportUpload(e)} />
+                     <div className="text-4xl mb-3">📷</div>
+                     <p className="text-sm text-gray-500">Click to upload or drag & drop your passport photo</p>
+                     <p className="text-xs text-gray-400 mt-1">JPG, PNG, or WEBP (Max 5MB)</p>
+                   </div>
+                 )}
+                 <label className="flex items-start gap-3 cursor-pointer mb-6">
+                   <input type="checkbox" checked={passportVerified} onChange={e => setPassportVerified(e.target.checked)}
+                     className="mt-0.5 accent-[#E8634A] w-4 h-4" />
+                   <span className="text-sm text-gray-600">I confirm the passport photo is clear, recent, and belongs to me.</span>
+                 </label>
+               </div>
+
+              <div className="flex gap-3">
+                <Btn variant="ghost" onClick={() => setStep(3)}>Back</Btn>
+                <Btn variant="primary" full onClick={() => setStep(5)} disabled={!idVerified || !idFrontDoc || !idBackDoc || !passportVerified || !passportDoc}>Continue</Btn>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-[#fdf0ed] flex items-center justify-center mx-auto mb-5">
                 <span className="text-2xl text-[#E8634A] font-bold">H</span>
@@ -150,7 +284,7 @@ export function BecomeHostPage() {
                   : "You'll need an account first. We'll take you to registration and set you up as a host."}
               </p>
               <div className="flex gap-3 justify-center">
-                <Btn variant="ghost" onClick={() => setStep(3)}>Back</Btn>
+                <Btn variant="ghost" onClick={() => setStep(4)}>Back</Btn>
                 <Btn variant="primary" size="lg" onClick={handleActivate} disabled={loading}>
                   {loading ? "Activating…" : user ? "Activate Host Account" : "Create Host Account"}
                 </Btn>
@@ -192,7 +326,7 @@ export function ProfilePage() {
           </div>
           <div>
             <p className="font-semibold text-[#1B2B4B]">{form.name || "User"}</p>
-            <Badge color={user?.role === "host" ? "coral" : "blue"}>{user?.role === "host" ? "Host" : "Guest"}</Badge>
+            <Badge color={user?.role === "host" ? "coral" : user?.role === "admin" ? "purple" : "blue"}>{user?.role === "host" ? "Host" : user?.role === "admin" ? "Admin" : "Guest"}</Badge>
           </div>
         </div>
         <Input label="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
@@ -217,23 +351,25 @@ export function ProfilePage() {
         </Card>
       )}
 
-      {user?.role === "customer" && (
-        <Card className="p-5 mb-4">
-          <h3 className="font-bold text-[#1B2B4B] mb-3 text-sm">Become a Host</h3>
-          <p className="text-xs text-gray-500 mb-4">Have a property to list? Upgrade your account to start hosting.</p>
-          <Btn variant="outline" onClick={() => navigate("/become-host")}>Start the Host Application</Btn>
-        </Card>
-      )}
+       {user?.role === "customer" && (
+         <Card className="p-5 mb-4">
+           <h3 className="font-bold text-[#1B2B4B] mb-3 text-sm">Become a Host</h3>
+           <p className="text-xs text-gray-500 mb-4">Have a property to list? Upgrade your account to start hosting.</p>
+           <Btn variant="outline" onClick={() => navigate("/become-host")}>Start the Host Application</Btn>
+         </Card>
+       )}
 
       <Card className="p-5">
         <h3 className="font-bold text-[#1B2B4B] mb-3 text-sm">Account Actions</h3>
-        <div className="flex flex-wrap gap-2">
-          <Btn variant="ghost" size="sm" onClick={() => navigate("/forgot-password")}>Change Password</Btn>
-          {user?.role === "customer"
-            ? <Btn variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>My Bookings</Btn>
-            : <Btn variant="ghost" size="sm" onClick={() => navigate("/host/dashboard")}>My Listings</Btn>
-          }
-        </div>
+         <div className="flex flex-wrap gap-2">
+           <Btn variant="ghost" size="sm" onClick={() => navigate("/forgot-password")}>Change Password</Btn>
+           {user?.role === "customer"
+             ? <Btn variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>My Bookings</Btn>
+             : user?.role === "admin"
+               ? <Btn variant="ghost" size="sm" onClick={() => navigate("/admin/dashboard")}>Admin Dashboard</Btn>
+               : <Btn variant="ghost" size="sm" onClick={() => navigate("/host/dashboard")}>My Listings</Btn>
+           }
+         </div>
       </Card>
     </div>
   );
@@ -268,6 +404,10 @@ export function PropertyFormPage({ params }) {
   // ─── PHOTO UPLOAD STATE ──────────────────────────────────────────────────
   const [photos, setPhotos] = useState([]);
   const [photoPreviews, setPhotoPreviews] = useState([]);
+
+  // ─── PROPERTY EVIDENCE STATE ──────────────────────
+  const [evidenceDocs, setEvidenceDocs] = useState([]);
+  const [evidencePreviews, setEvidencePreviews] = useState([]);
   
   // ─── VALIDATION STATE ─────────────────────────────────────────────────────
   const [errors, setErrors] = useState({});
@@ -328,6 +468,65 @@ export function PropertyFormPage({ params }) {
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.currentTarget.classList.remove('border-[#E8634A]', 'bg-[#fdf0ed]');
+  };
+
+  // ─── EVIDENCE HANDLING ──────────────────────────────────────
+  const handleEvidenceUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter(file => {
+      const isValidType = ["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type);
+      const isValidSize = file.size <= 5 * 1024 * 1024;
+      if (!isValidType) {
+        alert(`${file.name} is not supported. Use JPG, PNG, WEBP, or PDF.`);
+        return false;
+      }
+      if (!isValidSize) {
+        alert(`${file.name} is too large. Maximum 5MB.`);
+        return false;
+      }
+      return true;
+    });
+    if (validFiles.length === 0) return;
+    const previews = validFiles.map(file => URL.createObjectURL(file));
+    setEvidenceDocs([...evidenceDocs, ...validFiles]);
+    setEvidencePreviews([...evidencePreviews, ...previews]);
+    setErrors({ ...errors, evidence: undefined });
+  };
+
+  const removeEvidence = (index) => {
+    URL.revokeObjectURL(evidencePreviews[index]);
+    const newDocs = [...evidenceDocs];
+    const newPreviews = [...evidencePreviews];
+    newDocs.splice(index, 1);
+    newPreviews.splice(index, 1);
+    setEvidenceDocs(newDocs);
+    setEvidencePreviews(newPreviews);
+  };
+
+  // ─── PASSPORT PHOTO HANDLING ──────────────────────────────
+  const handlePassportUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const isValidType = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+    const isValidSize = file.size <= 5 * 1024 * 1024;
+    if (!isValidType) {
+      alert("Unsupported file type. Use JPG, PNG, or WEBP.");
+      return;
+    }
+    if (!isValidSize) {
+      alert("File too large. Maximum 5MB.");
+      return;
+    }
+    setPassportDoc(file);
+    setPassportPreview(URL.createObjectURL(file));
+    setPassportVerified(false);
+  };
+
+  const removePassport = () => {
+    if (passportPreview) URL.revokeObjectURL(passportPreview);
+    setPassportDoc(null);
+    setPassportPreview(null);
+    setPassportVerified(false);
   };
 
   // ─── VALIDATION FUNCTIONS ──────────────────────────────────────────────
@@ -548,6 +747,50 @@ export function PropertyFormPage({ params }) {
                     onClick={() => removePhoto(index)}
                     className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                   >
+                    ×
+                  </button>
+                  <span className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
+                    {index + 1}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ─── PROPERTY EVIDENCE ────────────────────────────────────── */}
+        <Card className="mb-4 p-6">
+          <h3 className="font-bold text-[#1B2B4B] mb-2">
+            Property Evidence <span className="text-[#E8634A] text-sm">*</span>
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">
+            Upload documents proving the property exists (utility bill, ownership deed, or tax record)
+          </p>
+          <div className="border-2 border-dashed rounded-xl p-8 text-center transition-all mb-4 border-gray-300 hover:border-[#E8634A] bg-gray-50"
+            onClick={() => document.getElementById("evidence-upload").click()}
+          >
+            <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple
+              className="hidden" id="evidence-upload"
+              onChange={e => handleEvidenceUpload(e)} />
+            <div className="text-4xl mb-3">📄</div>
+            <p className="text-sm text-gray-500">
+              Drag & drop documents here or <span className="text-[#E8634A] font-medium">click to browse</span>
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Supported: JPG, PNG, WEBP, PDF (Max 5MB each)
+            </p>
+          </div>
+          {errors.evidence && (
+            <p className="text-xs text-red-500 mt-2">{errors.evidence}</p>
+          )}
+          {evidencePreviews.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
+              {evidencePreviews.map((preview, index) => (
+                <div key={index} className="relative group">
+                  <img src={preview} alt={`Evidence document ${index + 1}`}
+                    className="w-full h-24 object-cover rounded-lg" />
+                  <button type="button" onClick={() => removeEvidence(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">
                     ×
                   </button>
                   <span className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">

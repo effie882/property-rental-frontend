@@ -5,7 +5,7 @@ import { Navbar } from "./components/Navbar";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage, RegisterPage, ForgotPasswordPage } from "./pages/AuthPages";
 import { PropertiesPage, PropertyDetailPage } from "./pages/PropertiesPages";
-import { DashboardPage, HostDashboardPage } from "./pages/DashboardPages";
+import { DashboardPage, HostDashboardPage, AdminDashboardPage } from "./pages/DashboardPages";
 import { BookingDetailPage } from "./pages/BookingPages";
 import { ProfilePage, BecomeHostPage, PropertyFormPage } from "./pages/SettingsPages";
 
@@ -34,6 +34,9 @@ export default function App() {
           <Route path="/host/dashboard" component={HostDashboardPage} protect hostOnly />
           <Route path="/host/properties/new" component={PropertyFormPage} protect hostOnly />
           <Route path="/host/properties/:id/edit" component={PropertyFormPage} protect hostOnly />
+          
+          {/* Protected Routes - Admin Only */}
+          <Route path="/admin/dashboard" component={AdminDashboardPage} protect adminOnly />
         </div>
       </RouterProvider>
     </AuthProvider>

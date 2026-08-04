@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useRouter } from "../context/AuthContext";
+import { useAuth, useRouter } from "../context/AuthContext";
 import { BOOKINGS, KES } from "../data/constants";
 import { Card, Btn, Alert, StatusBadge } from "../components/common";
 
 //booking details//
 export function BookingDetailPage({ params }) {
+  const { user } = useAuth();
   const { navigate } = useRouter();
   const booking = BOOKINGS.find(b => b.id === params.id);
   const [status, setStatus] = useState(booking?.status || "confirmed");
-  
-  if (!booking) {
+
+  if (!booking || booking.userEmail !== user?.email) {
     return <div className="max-w-2xl mx-auto px-4 py-10"><p>Booking not found.</p></div>;
   }
   

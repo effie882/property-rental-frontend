@@ -30,8 +30,8 @@ export const PROPERTIES = [
     disabilityAccess:true, 
     host:"Jane Wanjiku", 
     available:true, 
+    approved:true,
     description:"A stunning villa with panoramic views of the Nairobi skyline. Perfect for families seeking a luxurious getaway in the heart of the capital.",
-    // ─── ADD IMAGES ──────────────────────────────────────────────────────
     images: [
       "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -56,6 +56,7 @@ export const PROPERTIES = [
     disabilityAccess:false, 
     host:"Tom Odhiambo", 
     available:true, 
+    approved:false,
     description:"Wake up to the sound of ocean waves in this beautifully decorated apartment just steps from the beach.",
     images: [
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -80,6 +81,7 @@ export const PROPERTIES = [
     disabilityAccess:false, 
     host:"Sarah Kamau", 
     available:true, 
+    approved:false,
     description:"Escape to this rustic mountain lodge surrounded by lush forest. Ideal for adventure seekers and nature lovers.",
     images: [
       "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -104,6 +106,7 @@ export const PROPERTIES = [
     disabilityAccess:true, 
     host:"Mike Otieno", 
     available:true, 
+    approved:true,
     description:"A modern loft in the heart of Nairobi's CBD. Walk to restaurants, shops, and major attractions.",
     images: [
       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -127,6 +130,7 @@ export const PROPERTIES = [
     disabilityAccess:false, 
     host:"Emma Njeri", 
     available:true, 
+    approved:false,
     description:"A charming cottage on the shores of Lake Naivasha. Watch hippos from your private deck.",
     images: [
       "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -150,6 +154,7 @@ export const PROPERTIES = [
     disabilityAccess:false, 
     host:"Lisa Achieng", 
     available:true, 
+    approved:false,
     description:"An extraordinary safari experience just minutes from the Maasai Mara reserve. Fall asleep to sounds of the wild.",
     images: [
       "https://images.unsplash.com/photo-1516426122078-c23e76319801?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -160,8 +165,8 @@ export const PROPERTIES = [
 ];
 
 export const BOOKINGS = [
-  { id:"b1", property:PROPERTIES[0], checkIn:"2025-08-10", checkOut:"2025-08-15", total:78000, status:"confirmed", guests:3 },
-  { id:"b2", property:PROPERTIES[2], checkIn:"2025-07-01", checkOut:"2025-07-04", total:78000, status:"completed", guests:6 },
+  { id:"b1", property:PROPERTIES[0], checkIn:"2025-08-10", checkOut:"2025-08-15", total:78000, status:"confirmed", guests:3, userEmail:"alex@stayEase.com" },
+  { id:"b2", property:PROPERTIES[2], checkIn:"2025-07-01", checkOut:"2025-07-04", total:78000, status:"completed", guests:6, userEmail:"alex@stayEase.com" },
 ];
 
 export const LOCATIONS = ["Nairobi","Mombasa","Maasai Mara","Naivasha","Mt. Kenya","Diani Beach"];

@@ -524,17 +524,21 @@ export function PropertyDetailPage({ params }) {
                     </div>
                   )}
 
-                  {/* ─── BOOK BUTTON ───────────────────────────────────────── */}
-                  <Btn variant="primary" full disabled={!checkIn || !checkOut || nights <= 0}
-                    onClick={() => {
-                      if (!user) {
-                        navigate("/login");
-                        return;
-                      }
-                      setBooked(true);
-                    }}>
-                    {user ? "Reserve Now" : "Sign in to Book"}
-                  </Btn>
+                   {/* ─── BOOK BUTTON ───────────────────────────────────────── */}
+                   {!property.approved ? (
+                     <Alert type="warning">This property is pending admin approval and cannot be booked yet.</Alert>
+                   ) : (
+                     <Btn variant="primary" full disabled={!checkIn || !checkOut || nights <= 0}
+                       onClick={() => {
+                         if (!user) {
+                           navigate("/login");
+                           return;
+                         }
+                         setBooked(true);
+                       }}>
+                       {user ? "Reserve Now" : "Sign in to Book"}
+                     </Btn>
+                   )}
                 </>
               )}
             </Card>

@@ -15,7 +15,11 @@ export function AuthProvider({ children }) {
     const updated = { ...user, role: "host" };
     login(updated);
   };
-  return <AuthContext.Provider value={{ user, login, logout, upgradeToHost }}>{children}</AuthContext.Provider>;
+  const upgradeToAdmin = () => {
+    const updated = { ...user, role: "admin" };
+    login(updated);
+  };
+  return <AuthContext.Provider value={{ user, login, logout, upgradeToHost, upgradeToAdmin }}>{children}</AuthContext.Provider>;
 }
 
 // ─── ROUTER CONTEXT ──────────────────────────────────────────────────────────
@@ -34,12 +38,13 @@ export function RouterProvider({ children }) {
 }
 
 // ─── ROUTE COMPONENT ─────────────────────────────────────────────────────────
-export function Route({ path: pattern, component: C, protect, hostOnly }) {
+export function Route({ path: pattern, component: C, protect, hostOnly, adminOnly }) {
   const { path, navigate } = useRouter();
   const { user } = useAuth();
   const params = matchRoute(pattern, path);
   if (!params) return null;
   if (protect && !user) { setTimeout(() => navigate("/login"), 0); return null; }
   if (hostOnly && user?.role !== "host") { setTimeout(() => navigate("/dashboard"), 0); return null; }
+  if (adminOnly && user?.role !== "admin") { setTimeout(() => navigate("/"), 0); return null; }
   return <C params={params} />;
 }

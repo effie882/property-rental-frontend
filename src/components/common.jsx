@@ -303,10 +303,12 @@ export function PropertyCard({ property, onClick }) {
           <p className="text-gray-400 text-xs mb-2 truncate">{property.location}</p>
           
           <div className="flex flex-wrap gap-1 mb-3">
-            {property.smoking && <Badge color="gray">Smoking OK</Badge>}
-            {property.petFriendly && <Badge color="green">Pet Friendly</Badge>}
-            {property.disabilityAccess && <Badge color="blue">Accessible</Badge>}
-          </div>
+             {property.smoking && <Badge color="gray">Smoking OK</Badge>}
+             {property.petFriendly && <Badge color="green">Pet Friendly</Badge>}
+             {property.disabilityAccess && <Badge color="blue">Accessible</Badge>}
+             {property.approved === false && <Badge color="yellow">Pending Approval</Badge>}
+             {property.approved === true && <Badge color="green">Approved</Badge>}
+           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-[#E8634A] font-bold text-sm">

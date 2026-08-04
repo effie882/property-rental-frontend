@@ -111,15 +111,15 @@ export function LoginPage() {
     
     // Generate username from email
     const username = generateUsername(form.email);
-    const role = form.email.includes("host") ? "host" : "customer";
+    const role = form.email.includes("admin") ? "admin" : form.email.includes("host") ? "host" : "customer";
     
     login({ 
       username: username,
-      name: role === "host" ? "Jane Wanjiku" : "Alex Kamau", 
+      name: role === "admin" ? "Admin User" : role === "host" ? "Jane Wanjiku" : "Alex Kamau", 
       email: form.email, 
       role 
     });
-    navigate(role === "host" ? "/host/dashboard" : "/dashboard");
+    navigate(role === "admin" ? "/admin/dashboard" : role === "host" ? "/host/dashboard" : "/dashboard");
     setLoading(false);
   };
 
@@ -195,7 +195,7 @@ export function LoginPage() {
               No account? <button className="text-[#E8634A] font-medium hover:underline" onClick={() => navigate("/register")}>Sign up</button>
             </p>
             <p className="text-xs text-gray-300 mt-2">
-              Tip: include "host" in email for a host demo account
+               Tip: include "host" in email for a host demo account
             </p>
           </div>
         </div>
