@@ -1,122 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { AuthProvider, RouterProvider, Route } from "./context/AuthContext";
+import { Navbar } from "./components/Navbar";
 
-function App() {
-  const [count, setCount] = useState(0)
+// Import all pages
+import { HomePage } from "./pages/HomePage";
+import { LoginPage, RegisterPage, ForgotPasswordPage } from "./pages/AuthPages";
+import { PropertiesPage, PropertyDetailPage } from "./pages/PropertiesPages";
+import { DashboardPage, HostDashboardPage, AdminDashboardPage } from "./pages/DashboardPages";
+import { BookingDetailPage } from "./pages/BookingPages";
+import { ProfilePage, BecomeHostPage, PropertyFormPage } from "./pages/SettingsPages";
 
+export default function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <AuthProvider>
+      <RouterProvider>
+        <div className="min-h-screen bg-[#F7F3EE] font-sans">
+          <Navbar />
+          
+          {/* Public Routes */}
+          <Route path="/" component={HomePage} />
+          <Route path="/login" component={LoginPage} />
+          <Route path="/register" component={RegisterPage} />
+          <Route path="/forgot-password" component={ForgotPasswordPage} />
+          <Route path="/become-host" component={BecomeHostPage} />
+          <Route path="/properties" component={PropertiesPage} />
+          <Route path="/properties/:id" component={PropertyDetailPage} />
+          
+          {/* Protected Routes - Customer */}
+          <Route path="/dashboard" component={DashboardPage} protect />
+          <Route path="/bookings/:id" component={BookingDetailPage} protect />
+          <Route path="/profile" component={ProfilePage} protect />
+          
+          {/* Protected Routes - Host Only */}
+          <Route path="/host/dashboard" component={HostDashboardPage} protect hostOnly />
+          <Route path="/host/properties/new" component={PropertyFormPage} protect hostOnly />
+          <Route path="/host/properties/:id/edit" component={PropertyFormPage} protect hostOnly />
+          
+          {/* Protected Routes - Admin Only */}
+          <Route path="/admin/dashboard" component={AdminDashboardPage} protect adminOnly />
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      </RouterProvider>
+    </AuthProvider>
+  );
 }
-
-export default App
